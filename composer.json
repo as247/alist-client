@@ -1,0 +1,28 @@
+{
+  "name": "as247/alist-client",
+  "description": "AList PHP API client",
+  "keywords": ["alist", "api"],
+  "license": "MIT",
+  "homepage": "https://github.com/as247/alist-client",
+  "support": {
+    "issues": "https://github.com/as247/alist-client/issues",
+    "source": "https://github.com/as247/alist-client"
+  },
+  "authors": [
+    {
+      "name": "As247",
+      "email": "as247@wpstarter.dev"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "As247\\AList\\": "src/"
+    }
+  },
+  "require": {
+    "guzzlehttp/guzzle": "^6.5.8 || ^7.4.5",
+    "ext-json": "*"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
