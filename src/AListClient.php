@@ -26,6 +26,7 @@ use GuzzleHttp\Client;
 class AListClient
 {
     protected $address;
+    protected $proxyUrl;
     protected $token;
     protected $options;
     protected $client;
@@ -53,19 +54,22 @@ class AListClient
 
     public function __construct($address, $token, $options = [])
     {
-        $this->address = $address;
+        $this->address = rtrim($address,'/');
         $this->token = $token;
-        $default = [
-            'base_uri' => $address,
-        ];
-        $this->options = $options + $default;
         if (!isset($this->options['headers'])) {
             $this->options['headers'] = [];
         }
         if (!isset($this->options['headers']['Authorization'])) {
             $this->options['headers']['Authorization'] = $this->token;
         }
-        $this->client = new Client($this->options);
+        if(isset($this->options['proxy_url'])){
+            $this->setProxyUrl($this->options['proxy_url']);
+        }
+        $clientOptions=$this->options['client']??[];
+        $clientOptions['base_uri']=$this->address;
+        $clientOptions['headers']=$this->options['headers'];
+
+        $this->client = new Client($clientOptions);
         foreach ($this->apiList as $path => $method) {
             $method=str_replace('/api/', '', $path);
             $method=str_replace('/', '_', $method);
@@ -75,11 +79,26 @@ class AListClient
         }
 
     }
+    public function setProxyUrl($url)
+    {
+        $this->proxyUrl=rtrim($url,'/');
+        return $this;
+    }
+    public function getBaseUrl()
+    {
+        return $this->address;
+    }
     public function getGuzzleClient()
     {
         return $this->client;
     }
-
+    public function getDownloadUrl($path,$expire=0)
+    {
+        $path='/'.ltrim($path,'/');
+        $sign=$this->sign($path,$expire);
+        $base=$this->proxyUrl?:$this->address.'/d';
+        return $base.$path.'?sign='.$sign;
+    }
     public function sign($path,$expire)
     {
         $toSign = $path . ':' . $expire;
