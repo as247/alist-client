@@ -9,6 +9,7 @@ use GuzzleHttp\Client;
  * @method fsForm(array $body = [], array $headers = [])
  * @method fsList(array $body = [], array $headers = [])
  * @method fsGet(array $body = [], array $headers = [])
+ * @method fsLink(array $body = [], array $headers = [])
  * @method fsSearch(array $body = [], array $headers = [])
  * @method fsDirs(array $body = [], array $headers = [])
  * @method fsBatchRename(array $body = [], array $headers = [])
@@ -18,7 +19,7 @@ use GuzzleHttp\Client;
  * @method fsCopy(array $body = [], array $headers = [])
  * @method fsRemove(array $body = [], array $headers = [])
  * @method fsRemoveEmptyDirectory(array $body = [], array $headers = [])
- * @method fsPut(array $body = [], array $headers = [])
+ * @method fsPut($body, array $headers = [])
  * @method fsAddAria2(array $body = [], array $headers = [])
  * @method fsAddQbit(array $body = [], array $headers = [])
  */
@@ -46,6 +47,7 @@ class AListClient
         "/api/fs/put" => "PUT",
         "/api/fs/add_aria2" => "POST",
         "/api/fs/add_qbit" => "POST",
+        "/api/fs/link" => "POST",
     ];
     protected $apiMethods=[];
 
@@ -73,6 +75,10 @@ class AListClient
         }
 
     }
+    public function getGuzzleClient()
+    {
+        return $this->client;
+    }
 
     public function sign($path,$expire)
     {
@@ -94,7 +100,24 @@ class AListClient
     {
         if(isset($this->apiList[$path])){
             $method=$this->apiList[$path];
-            $response = $this->client->request($method, $path, ['json' => $body, 'headers' => $headers]);
+            if($method==='PUT'){
+                if($path==='/api/fs/put'){
+                    //Put file with body content
+                    $response = $this->client->request('PUT', $path, ['body' => $body, 'headers' => $headers]);
+                }
+                if($path==='/api/fs/form'){
+                    //Put file with form data
+                    $response = $this->client->request('PUT', $path, ['multipart'=>[
+                        [
+                            'name'=>'file',
+                            'content'=>$body
+                        ]
+                    ], 'headers' => $headers]);
+                }
+            }
+            if(!isset($response)) {
+                $response = $this->client->request($method, $path, ['json' => $body, 'headers' => $headers]);
+            }
             return $this->parseResponse($response);
         }else{
             throw new \Exception("Api path [$path] not found");
